@@ -1,6 +1,6 @@
 use super::{
-    extract_nodes_from_subscription, extract_subscription_userinfo,
-    parse_subscription_userinfo, try_decode_base64_to_text,
+    extract_nodes_from_subscription, extract_subscription_userinfo, parse_subscription_userinfo,
+    try_decode_base64_to_text,
 };
 use base64::{engine::general_purpose, Engine as _};
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -23,7 +23,11 @@ fn try_decode_base64_to_text_should_accept_whitespace_and_missing_padding() {
         .trim_end_matches('=')
         .chars()
         .collect::<Vec<_>>();
-    let formatted = format!("{} \n {}", encoded[..8].iter().collect::<String>(), encoded[8..].iter().collect::<String>());
+    let formatted = format!(
+        "{} \n {}",
+        encoded[..8].iter().collect::<String>(),
+        encoded[8..].iter().collect::<String>()
+    );
 
     let decoded = try_decode_base64_to_text(&formatted).expect("decode should work");
     assert_eq!(decoded, raw);

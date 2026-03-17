@@ -92,7 +92,7 @@ impl ProcessManager {
                     return cmd_base == kernel_name;
                 }
             }
-            return false;
+            false
         }
 
         #[cfg(target_os = "windows")]
@@ -117,7 +117,7 @@ impl ProcessManager {
                     }
                 }
             }
-            return false;
+            false
         }
 
         #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
@@ -160,6 +160,9 @@ impl ProcessManager {
             }
         }
 
+        #[cfg(not(target_os = "linux"))]
+        let _ = tun_enabled;
+
         let _ = kernel_name;
         if let Err(e) = self.persist_managed_pid(child_pid) {
             warn!("记录托管内核 PID 失败 (pid={}): {}", child_pid, e);
@@ -198,6 +201,9 @@ impl ProcessManager {
         if !self.is_managed_kernel_pid_active(pid, kernel_name).await {
             return;
         }
+
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+        let _ = app_handle;
 
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         if let Some(app_handle) = app_handle {
@@ -678,6 +684,9 @@ impl ProcessManager {
     ) -> std::result::Result<(), String> {
         let kernel_name = crate::platform::get_kernel_executable_name();
         info!("按进程名强制清理内核进程: {}", kernel_name);
+
+        #[cfg(not(target_os = "linux"))]
+        let _ = app_handle;
 
         let plain_kill_result = crate::platform::kill_processes_by_name(kernel_name)
             .await

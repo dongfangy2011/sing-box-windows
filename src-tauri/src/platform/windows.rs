@@ -11,7 +11,7 @@ pub async fn platform_is_process_running(process_name: &str) -> Result<bool, Str
 
     // 方法1: 使用 tasklist
     let mut cmd = tokio::process::Command::new("tasklist");
-    cmd.args(&[
+    cmd.args([
         "/FI",
         &format!("IMAGENAME eq {}", process_name),
         "/FO",
@@ -27,7 +27,7 @@ pub async fn platform_is_process_running(process_name: &str) -> Result<bool, Str
                 .split('"')
                 .filter(|s| !s.is_empty() && *s != ",")
                 .collect();
-            if let Some(image_name) = parts.get(0) {
+            if let Some(image_name) = parts.first() {
                 if image_name.to_ascii_lowercase() == process_lower {
                     info!("通过tasklist检测到进程: {}", image_name);
                     return Ok(true);
@@ -38,7 +38,7 @@ pub async fn platform_is_process_running(process_name: &str) -> Result<bool, Str
 
     // 方法2: 使用 PowerShell
     let mut cmd = tokio::process::Command::new("powershell");
-    cmd.args(&[
+    cmd.args([
         "-Command",
         &format!(
             "Get-Process | Where-Object {{ $_.ProcessName -eq '{}' }}",
@@ -61,7 +61,7 @@ pub async fn platform_is_process_running(process_name: &str) -> Result<bool, Str
 /// 杀死指定名称的进程（Windows）
 pub async fn platform_kill_processes_by_name(process_name: &str) -> Result<(), String> {
     let mut cmd = tokio::process::Command::new("taskkill");
-    cmd.args(&["/F", "/IM", process_name]);
+    cmd.args(["/F", "/IM", process_name]);
     platform_configure_process_command(&mut cmd);
 
     match cmd.output().await {
@@ -85,7 +85,7 @@ pub async fn platform_kill_processes_by_name(process_name: &str) -> Result<(), S
 /// 杀死指定 PID 的进程（Windows）
 pub fn platform_kill_process_by_pid(pid: u32) -> Result<(), String> {
     let mut cmd = std::process::Command::new("taskkill");
-    cmd.args(&["/F", "/PID", &pid.to_string()]);
+    cmd.args(["/F", "/PID", &pid.to_string()]);
     platform_configure_std_command(&mut cmd);
 
     let output = cmd
@@ -124,7 +124,7 @@ pub fn platform_get_kernel_executable_name() -> &'static str {
 /// 获取系统运行时间（Windows）
 pub async fn platform_get_system_uptime_ms() -> Result<u64, String> {
     let mut cmd = tokio::process::Command::new("powershell");
-    cmd.args(&[
+    cmd.args([
         "-Command",
         "(Get-Date) - (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime | Select-Object -ExpandProperty TotalMilliseconds"
     ]);

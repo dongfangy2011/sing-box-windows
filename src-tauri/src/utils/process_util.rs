@@ -1,6 +1,6 @@
-/// 进程工具函数
-///
-/// 提供跨平台的进程创建辅助函数，确保Windows下不显示控制台窗口
+//! 进程工具函数
+//!
+//! 提供跨平台的进程创建辅助函数，确保 Windows 下不显示控制台窗口。
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;

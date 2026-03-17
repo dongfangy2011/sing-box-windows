@@ -624,10 +624,7 @@ fn ensure_urltest_and_selector(
     Ok(())
 }
 
-fn ensure_app_group_selectors(
-    outbounds: &mut Vec<Value>,
-    node_tags: &[String],
-) -> Result<(), String> {
+fn ensure_app_group_selectors(outbounds: &mut [Value], node_tags: &[String]) -> Result<(), String> {
     let group_tags = [
         TAG_TELEGRAM,
         TAG_YOUTUBE,

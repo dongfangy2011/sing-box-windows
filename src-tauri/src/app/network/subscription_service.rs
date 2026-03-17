@@ -240,7 +240,7 @@ pub async fn download_subscription(
     }
 
     if let Err(e) =
-        update_subscription_userinfo(&app_handle, &target_path, trimmed_url, userinfo.clone()).await
+        update_subscription_userinfo(app_handle, &target_path, trimmed_url, userinfo.clone()).await
     {
         warn!("同步订阅信息失败: {}", e);
     }

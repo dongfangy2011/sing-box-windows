@@ -27,7 +27,10 @@ fn has_private_ip_rule(rules: &[Value]) -> bool {
 
 #[test]
 fn sanitize_file_name_should_replace_invalid_characters_and_fallback() {
-    assert_eq!(sanitize_file_name("my config?.json", "config.json"), "my-config-.json");
+    assert_eq!(
+        sanitize_file_name("my config?.json", "config.json"),
+        "my-config-.json"
+    );
     assert_eq!(sanitize_file_name(".", "config.json"), "config.json");
     assert_eq!(sanitize_file_name("..", "config.json"), "config.json");
 }
@@ -45,8 +48,7 @@ fn normalize_active_config_local_path_should_keep_local_absolute_path() {
     let local_path = paths::get_config_dir().join("configs").join("manual.json");
     let local_path_str = local_path.to_string_lossy().to_string();
 
-    let (normalized, migrated) =
-        normalize_active_config_local_path(Some(local_path_str.as_str()));
+    let (normalized, migrated) = normalize_active_config_local_path(Some(local_path_str.as_str()));
 
     assert_eq!(normalized, local_path);
     assert!(!migrated);

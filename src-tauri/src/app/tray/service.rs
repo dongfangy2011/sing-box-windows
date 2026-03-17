@@ -230,14 +230,13 @@ fn build_tray_menu<R: Runtime>(
         .build(app)
         .map_err(|e| format!("创建TUN菜单项失败: {}", e))?;
 
-    let proxy_submenu =
-        SubmenuBuilder::with_id(app, menu_ids::PROXY_SUBMENU, text.proxy_controls)
-            .item(&current_mode_item)
-            .separator()
-            .item(&proxy_system_item)
-            .item(&proxy_tun_item)
-            .build()
-            .map_err(|e| format!("创建代理模式子菜单失败: {}", e))?;
+    let proxy_submenu = SubmenuBuilder::with_id(app, menu_ids::PROXY_SUBMENU, text.proxy_controls)
+        .item(&current_mode_item)
+        .separator()
+        .item(&proxy_system_item)
+        .item(&proxy_tun_item)
+        .build()
+        .map_err(|e| format!("创建代理模式子菜单失败: {}", e))?;
 
     let quit_item = MenuItemBuilder::with_id(menu_ids::QUIT, text.quit)
         .build(app)
@@ -254,11 +253,7 @@ fn build_tray_menu<R: Runtime>(
         .map_err(|e| format!("创建托盘菜单失败: {}", e))
 }
 
-fn handle_proxy_toggle_menu_event<R: Runtime>(
-    app: &AppHandle<R>,
-    feature: &str,
-    enabled: bool,
-) {
+fn handle_proxy_toggle_menu_event<R: Runtime>(app: &AppHandle<R>, feature: &str, enabled: bool) {
     let payload = TrayToggleProxyFeaturePayload {
         feature: feature.to_string(),
         enabled,
