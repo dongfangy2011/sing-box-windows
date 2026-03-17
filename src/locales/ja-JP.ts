@@ -389,6 +389,9 @@ export default {
       ports: 'ポート設定',
       portsDesc: 'プロキシとAPIポートを設定',
       configure: 'ポートを設定',
+      allowLanAccess: 'LAN アクセスを許可',
+      allowLanAccessDesc:
+        '有効にすると、プロキシの待受アドレスが 0.0.0.0 になり、同一 LAN の端末からこの端末の IP 経由で利用できます。制御 API は引き続きローカル限定です。',
       proxyPort: 'プロキシポート',
       apiPort: 'APIポート',
       portSettings: 'ポート設定',
