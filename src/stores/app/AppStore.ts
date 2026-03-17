@@ -65,6 +65,9 @@ export const useAppStore = defineStore(
     // IP版本设置
     const preferIpv6 = ref(false)
 
+    // 是否允许局域网设备访问本机代理入站
+    const allowLanAccess = ref(false)
+
     // 端口配置
     const proxyPort = ref(12080) // 代理端口
     const apiPort = ref(12081) // API端口
@@ -112,6 +115,7 @@ export const useAppStore = defineStore(
       autoStartKernel,
       autoStartApp,
       preferIpv6,
+      allowLanAccess,
       proxyPort,
       apiPort,
       trayInstanceId,
@@ -186,6 +190,7 @@ export const useAppStore = defineStore(
           apiPort: apiPort.value,
           autoStartKernel: autoStartKernel.value,
           autoStartApp: autoStartApp.value,
+          allowLanAccess: allowLanAccess.value,
         })
 
         // 同步开机自启设置与系统状态（修复更新后设置丢失的问题）
@@ -196,7 +201,7 @@ export const useAppStore = defineStore(
         // 注意：自动启动内核的逻辑现在由 App.vue 统一处理
         // 这里只加载数据，不执行启动逻辑，避免重复
 
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100))
       } finally {
         finishInitialization()
       }
@@ -250,7 +255,8 @@ export const useAppStore = defineStore(
 
         // 检测已知的无害错误，功能实际生效时仍然抛出错误以保持一致性
         const errorMessage = String(error)
-        const isHarmlessError = errorMessage.includes('os error 2') ||
+        const isHarmlessError =
+          errorMessage.includes('os error 2') ||
           errorMessage.includes('system') ||
           errorMessage.includes('No such file or directory')
 
@@ -386,6 +392,11 @@ export const useAppStore = defineStore(
       // 保存会在 watch 中自动处理
     }
 
+    const setAllowLanAccess = async (enabled: boolean) => {
+      allowLanAccess.value = enabled
+      await waitForSaveCompletion()
+    }
+
     // 设置托盘实例ID
     const setTrayInstanceId = async (instanceId: string | null) => {
       trayInstanceId.value = instanceId
@@ -410,6 +421,7 @@ export const useAppStore = defineStore(
       autoStartKernel,
       autoStartApp,
       preferIpv6,
+      allowLanAccess,
       proxyPort,
       apiPort,
       systemProxyBypass,
@@ -454,6 +466,7 @@ export const useAppStore = defineStore(
       updatePorts,
       syncPortsToSingbox,
       setPreferIpv6,
+      setAllowLanAccess,
       updateProxyAdvancedSettings,
       setTrayInstanceId,
       initializeStore,

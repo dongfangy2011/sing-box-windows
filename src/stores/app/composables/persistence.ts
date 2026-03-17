@@ -8,6 +8,7 @@ export interface PersistenceState {
   autoStartKernel: Ref<boolean>
   autoStartApp: Ref<boolean>
   preferIpv6: Ref<boolean>
+  allowLanAccess: Ref<boolean>
   proxyPort: Ref<number>
   apiPort: Ref<number>
   trayInstanceId: Ref<string | null>
@@ -114,6 +115,7 @@ export function createAppPersistence(state: PersistenceState) {
       state.autoStartKernel.value = appConfig.auto_start_kernel
       state.autoStartApp.value = appConfig.auto_start_app
       state.preferIpv6.value = appConfig.prefer_ipv6
+      state.allowLanAccess.value = appConfig.allow_lan_access ?? state.allowLanAccess.value
       state.proxyPort.value = appConfig.proxy_port
       state.apiPort.value = appConfig.api_port
       state.trayInstanceId.value = appConfig.tray_instance_id || null
@@ -160,59 +162,56 @@ export function createAppPersistence(state: PersistenceState) {
   }
 
   const saveToBackend = async (options?: { applyRuntime?: boolean }) => {
-    try {
-      // Derive proxyMode from independent toggles for backward compatibility
-      let proxyMode = 'manual'
-      if (state.tunEnabled.value) {
-        proxyMode = 'tun'
-      } else if (state.systemProxyEnabled.value) {
-        proxyMode = 'system'
-      }
-
-      const config: AppConfig = {
-        proxy_mode: proxyMode,
-        system_proxy_enabled: state.systemProxyEnabled.value,
-        tun_enabled: state.tunEnabled.value,
-        auto_start_kernel: state.autoStartKernel.value,
-        auto_start_app: state.autoStartApp.value,
-        prefer_ipv6: state.preferIpv6.value,
-        proxy_port: state.proxyPort.value,
-        api_port: state.apiPort.value,
-        tray_instance_id: state.trayInstanceId.value,
-        system_proxy_bypass: state.systemProxyBypass.value,
-        tun_ipv4: state.tunIpv4.value,
-        tun_ipv6: state.tunIpv6.value,
-        tun_mtu: state.tunMtu.value,
-        tun_auto_route: state.tunAutoRoute.value,
-        tun_strict_route: state.tunStrictRoute.value,
-        tun_stack: state.tunStack.value,
-        tun_enable_ipv6: state.tunEnableIpv6.value,
-        active_config_path: state.activeConfigPath.value,
-        installed_kernel_version: state.installedKernelVersion.value,
-        singbox_dns_proxy: state.singboxDnsProxy.value,
-        singbox_dns_cn: state.singboxDnsCn.value,
-        singbox_dns_resolver: state.singboxDnsResolver.value,
-        singbox_urltest_url: state.singboxUrltestUrl.value,
-        singbox_default_proxy_outbound: state.singboxDefaultProxyOutbound.value,
-        singbox_block_ads: state.singboxBlockAds.value,
-        singbox_download_detour: state.singboxDownloadDetour.value,
-        singbox_dns_hijack: state.singboxDnsHijack.value,
-        singbox_fake_dns_enabled: state.singboxFakeDnsEnabled.value,
-        singbox_fake_dns_ipv4_range: state.singboxFakeDnsIpv4Range.value,
-        singbox_fake_dns_ipv6_range: state.singboxFakeDnsIpv6Range.value,
-        singbox_fake_dns_filter_mode: state.singboxFakeDnsFilterMode.value,
-        singbox_enable_app_groups: state.singboxEnableAppGroups.value,
-        tun_self_heal_enabled: state.tunSelfHealEnabled.value,
-        tun_self_heal_cooldown_secs: state.tunSelfHealCooldownSecs.value,
-      }
-      // 前端自动保存仅负责持久化，不直接触发后端运行态重配。
-      // 运行态变更统一由显式业务动作触发（如切换代理模式、重启内核、切换订阅）。
-      await DatabaseService.saveAppConfig(config, {
-        applyRuntime: options?.applyRuntime ?? false,
-      })
-    } catch {
-      // 保存失败时静默处理
+    // Derive proxyMode from independent toggles for backward compatibility
+    let proxyMode = 'manual'
+    if (state.tunEnabled.value) {
+      proxyMode = 'tun'
+    } else if (state.systemProxyEnabled.value) {
+      proxyMode = 'system'
     }
+
+    const config: AppConfig = {
+      proxy_mode: proxyMode,
+      system_proxy_enabled: state.systemProxyEnabled.value,
+      tun_enabled: state.tunEnabled.value,
+      auto_start_kernel: state.autoStartKernel.value,
+      auto_start_app: state.autoStartApp.value,
+      prefer_ipv6: state.preferIpv6.value,
+      allow_lan_access: state.allowLanAccess.value,
+      proxy_port: state.proxyPort.value,
+      api_port: state.apiPort.value,
+      tray_instance_id: state.trayInstanceId.value,
+      system_proxy_bypass: state.systemProxyBypass.value,
+      tun_ipv4: state.tunIpv4.value,
+      tun_ipv6: state.tunIpv6.value,
+      tun_mtu: state.tunMtu.value,
+      tun_auto_route: state.tunAutoRoute.value,
+      tun_strict_route: state.tunStrictRoute.value,
+      tun_stack: state.tunStack.value,
+      tun_enable_ipv6: state.tunEnableIpv6.value,
+      active_config_path: state.activeConfigPath.value,
+      installed_kernel_version: state.installedKernelVersion.value,
+      singbox_dns_proxy: state.singboxDnsProxy.value,
+      singbox_dns_cn: state.singboxDnsCn.value,
+      singbox_dns_resolver: state.singboxDnsResolver.value,
+      singbox_urltest_url: state.singboxUrltestUrl.value,
+      singbox_default_proxy_outbound: state.singboxDefaultProxyOutbound.value,
+      singbox_block_ads: state.singboxBlockAds.value,
+      singbox_download_detour: state.singboxDownloadDetour.value,
+      singbox_dns_hijack: state.singboxDnsHijack.value,
+      singbox_fake_dns_enabled: state.singboxFakeDnsEnabled.value,
+      singbox_fake_dns_ipv4_range: state.singboxFakeDnsIpv4Range.value,
+      singbox_fake_dns_ipv6_range: state.singboxFakeDnsIpv6Range.value,
+      singbox_fake_dns_filter_mode: state.singboxFakeDnsFilterMode.value,
+      singbox_enable_app_groups: state.singboxEnableAppGroups.value,
+      tun_self_heal_enabled: state.tunSelfHealEnabled.value,
+      tun_self_heal_cooldown_secs: state.tunSelfHealCooldownSecs.value,
+    }
+    // 前端自动保存仅负责持久化，不直接触发后端运行态重配。
+    // 运行态变更统一由显式业务动作触发（如切换代理模式、重启内核、切换订阅）。
+    await DatabaseService.saveAppConfig(config, {
+      applyRuntime: options?.applyRuntime ?? false,
+    })
   }
 
   const scheduleSave = () => {
@@ -223,7 +222,7 @@ export function createAppPersistence(state: PersistenceState) {
       clearTimeout(saveTimer)
     }
     saveTimer = setTimeout(() => {
-      const savePromise = saveToBackend()
+      const savePromise = saveToBackend().catch(() => undefined)
       lastSavePromise = savePromise
     }, SAVE_DEBOUNCE_MS)
   }
@@ -235,6 +234,7 @@ export function createAppPersistence(state: PersistenceState) {
       state.autoStartKernel,
       state.autoStartApp,
       state.preferIpv6,
+      state.allowLanAccess,
       state.proxyPort,
       state.apiPort,
       state.trayInstanceId,
