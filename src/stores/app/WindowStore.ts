@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { Window } from '@tauri-apps/api/window'
 import type { Router } from 'vue-router'
 import { DatabaseService } from '@/services/database-service'
+import { trayService } from '@/services/tray-service'
 import type { WindowConfig } from '@/types/database'
 import { useAppStore } from './AppStore'
 
@@ -101,6 +102,29 @@ export const useWindowStore = defineStore(
       if (router) {
         saveRouteAndGoBlank(router)
       }
+    }
+
+    const closeToTray = async (router?: Router) => {
+      const currentPath = router?.currentRoute.value.path
+      if (currentPath && currentPath !== '/blank') {
+        windowState.value.lastVisiblePath = currentPath
+        try {
+          await trayService.setLastVisibleRoute(currentPath)
+        } catch (error) {
+          console.error('关闭到托盘时同步路由失败:', error)
+        }
+      }
+
+      appStore.clearMessages()
+      await saveToBackend()
+      if (appStore.trayCloseBehavior === 'lightweight') {
+        void trayService.closeMainWindow().catch((error) => {
+          console.error('轻量模式关闭主窗口失败:', error)
+        })
+        return
+      }
+
+      await trayService.closeMainWindow()
     }
 
     // 显示窗口
@@ -255,6 +279,7 @@ export const useWindowStore = defineStore(
       toggleMaximize,
       updateWindowState,
       hideWindow,
+      closeToTray,
       showWindow,
       setWindowAlwaysOnTop,
       getWindowVisible,

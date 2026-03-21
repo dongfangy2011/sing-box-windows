@@ -7,6 +7,7 @@ use ts_rs::TS;
 pub struct AppConfig {
     pub auto_start_kernel: bool,
     pub auto_start_app: bool,
+    pub tray_close_behavior: String,
     pub prefer_ipv6: bool,
     pub allow_lan_access: bool,
     pub proxy_port: u16,
@@ -61,6 +62,7 @@ impl Default for AppConfig {
         Self {
             auto_start_kernel: true,
             auto_start_app: false,
+            tray_close_behavior: "hide".to_string(),
             prefer_ipv6: false,
             allow_lan_access: false,
             proxy_port: 12080,

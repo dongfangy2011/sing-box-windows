@@ -7,6 +7,7 @@ export interface TrayRuntimeStatePayload {
   activeSubscriptionName?: string | null
   locale: string
   windowVisible: boolean
+  closeBehavior: 'hide' | 'lightweight'
 }
 
 function sanitizeStatePayload(payload: TrayRuntimeStatePayload): TrayRuntimeStatePayload {
@@ -17,6 +18,7 @@ function sanitizeStatePayload(payload: TrayRuntimeStatePayload): TrayRuntimeStat
     activeSubscriptionName: payload.activeSubscriptionName?.trim() || null,
     locale: payload.locale?.trim() || 'en-US',
     windowVisible: payload.windowVisible,
+    closeBehavior: payload.closeBehavior,
   }
 }
 
@@ -47,6 +49,20 @@ export const trayService = {
     return invokeWithAppContext<void>('tray_hide_main_window', undefined, {
       skipDataRestore: true,
     })
+  },
+
+  closeMainWindow() {
+    return invokeWithAppContext<void>('tray_close_main_window', undefined, {
+      skipDataRestore: true,
+    })
+  },
+
+  consumePendingRestoreRoute() {
+    return invokeWithAppContext<{ path: string } | null>(
+      'tray_consume_pending_restore_route',
+      undefined,
+      { skipDataRestore: true },
+    )
   },
 
   requestExit() {

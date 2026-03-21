@@ -91,6 +91,7 @@ export const useTrayStore = defineStore('tray', () => {
       activeSubscriptionName,
       locale: localeStore.currentLocale || i18n.global.locale.value || 'en-US',
       windowVisible: windowStore.windowState.isVisible,
+      closeBehavior: appStore.trayCloseBehavior,
     }
   }
 
@@ -435,6 +436,11 @@ export const useTrayStore = defineStore('tray', () => {
     )
 
     registerWatcher(
+      () => appStore.trayCloseBehavior,
+      () => scheduleSync(true),
+    )
+
+    registerWatcher(
       () => windowStore.windowState.isVisible,
       () => scheduleSync(false),
     )
@@ -449,6 +455,14 @@ export const useTrayStore = defineStore('tray', () => {
     )
 
     await syncStateToBackend(true)
+    const pendingRoute = await trayService.consumePendingRestoreRoute().catch((error) => {
+      console.error('获取待恢复路由失败:', error)
+      return null
+    })
+    if (pendingRoute?.path) {
+      await handleRouteRestore(pendingRoute.path)
+      scheduleSync(true)
+    }
     return true
   }
 

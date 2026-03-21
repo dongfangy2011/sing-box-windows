@@ -1,3 +1,4 @@
+use super::model::TrayNavigatePayload;
 use super::model::TrayRuntimeStateInput;
 use super::service;
 use tauri::AppHandle;
@@ -24,6 +25,16 @@ pub fn tray_show_main_window(app_handle: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn tray_hide_main_window(app_handle: AppHandle) -> Result<(), String> {
     service::hide_main_window(&app_handle, true)
+}
+
+#[tauri::command]
+pub fn tray_close_main_window(app_handle: AppHandle) -> Result<(), String> {
+    service::close_main_window(&app_handle)
+}
+
+#[tauri::command]
+pub fn tray_consume_pending_restore_route() -> Option<TrayNavigatePayload> {
+    service::consume_pending_restore_route()
 }
 
 #[tauri::command]

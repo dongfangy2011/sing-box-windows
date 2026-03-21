@@ -1,4 +1,4 @@
-use super::model::{TrayProxyMode, TrayRuntimeStateInput};
+use super::model::{TrayCloseBehavior, TrayProxyMode, TrayRuntimeStateInput};
 
 #[derive(Debug, Clone)]
 pub struct TrayRuntimeState {
@@ -9,6 +9,10 @@ pub struct TrayRuntimeState {
     pub locale: String,
     pub window_visible: bool,
     pub last_visible_route: String,
+    pub close_behavior: TrayCloseBehavior,
+    pub pending_restore_route: Option<String>,
+    pub keep_alive_without_windows: bool,
+    pub allow_app_exit: bool,
 }
 
 impl Default for TrayRuntimeState {
@@ -21,6 +25,10 @@ impl Default for TrayRuntimeState {
             locale: "en-US".to_string(),
             window_visible: true,
             last_visible_route: "/".to_string(),
+            close_behavior: TrayCloseBehavior::Hide,
+            pending_restore_route: None,
+            keep_alive_without_windows: false,
+            allow_app_exit: false,
         }
     }
 }
@@ -64,6 +72,11 @@ impl TrayRuntimeState {
             changed = true;
         }
 
+        if self.close_behavior != payload.close_behavior {
+            self.close_behavior = payload.close_behavior;
+            changed = true;
+        }
+
         changed
     }
 
@@ -92,6 +105,20 @@ impl TrayRuntimeState {
         } else {
             TrayProxyMode::Manual
         }
+    }
+
+    pub fn set_pending_restore_route(&mut self, path: &str) -> bool {
+        let normalized = normalize_route(path);
+        let next = Some(normalized);
+        if self.pending_restore_route == next {
+            return false;
+        }
+        self.pending_restore_route = next;
+        true
+    }
+
+    pub fn take_pending_restore_route(&mut self) -> Option<String> {
+        self.pending_restore_route.take()
     }
 }
 

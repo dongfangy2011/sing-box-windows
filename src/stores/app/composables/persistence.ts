@@ -7,6 +7,7 @@ export interface PersistenceState {
   tunEnabled: Ref<boolean>
   autoStartKernel: Ref<boolean>
   autoStartApp: Ref<boolean>
+  trayCloseBehavior: Ref<string>
   preferIpv6: Ref<boolean>
   allowLanAccess: Ref<boolean>
   proxyPort: Ref<number>
@@ -114,6 +115,7 @@ export function createAppPersistence(state: PersistenceState) {
 
       state.autoStartKernel.value = appConfig.auto_start_kernel
       state.autoStartApp.value = appConfig.auto_start_app
+      state.trayCloseBehavior.value = appConfig.tray_close_behavior || state.trayCloseBehavior.value
       state.preferIpv6.value = appConfig.prefer_ipv6
       state.allowLanAccess.value = appConfig.allow_lan_access ?? state.allowLanAccess.value
       state.proxyPort.value = appConfig.proxy_port
@@ -176,6 +178,7 @@ export function createAppPersistence(state: PersistenceState) {
       tun_enabled: state.tunEnabled.value,
       auto_start_kernel: state.autoStartKernel.value,
       auto_start_app: state.autoStartApp.value,
+      tray_close_behavior: state.trayCloseBehavior.value,
       prefer_ipv6: state.preferIpv6.value,
       allow_lan_access: state.allowLanAccess.value,
       proxy_port: state.proxyPort.value,
@@ -233,6 +236,7 @@ export function createAppPersistence(state: PersistenceState) {
       state.tunEnabled,
       state.autoStartKernel,
       state.autoStartApp,
+      state.trayCloseBehavior,
       state.preferIpv6,
       state.allowLanAccess,
       state.proxyPort,

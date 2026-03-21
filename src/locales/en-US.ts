@@ -441,6 +441,11 @@ export default {
     startup: {
       title: 'Startup Settings',
       description: 'Configure application startup and auto-run options',
+      closeBehavior: 'Close Button Behavior',
+      closeBehaviorDesc:
+        'Choose whether closing the window hides it to tray or destroys it for lower background memory usage',
+      closeBehaviorHide: 'Hide to Tray',
+      closeBehaviorLightweight: 'Lightweight Mode (Destroy Window)',
       enabled: 'Startup with system enabled',
       disabled: 'Startup with system disabled',
       enableSuccess: 'Startup with system setting successful',

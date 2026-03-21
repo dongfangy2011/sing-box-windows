@@ -32,6 +32,23 @@ pub enum TrayProxyMode {
     Manual,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum TrayCloseBehavior {
+    #[default]
+    Hide,
+    Lightweight,
+}
+
+impl TrayCloseBehavior {
+    pub fn from_raw(value: &str) -> Self {
+        match value.trim() {
+            "lightweight" => Self::Lightweight,
+            _ => Self::Hide,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct TrayRuntimeStateInput {
@@ -41,6 +58,7 @@ pub struct TrayRuntimeStateInput {
     pub active_subscription_name: Option<String>,
     pub locale: String,
     pub window_visible: bool,
+    pub close_behavior: TrayCloseBehavior,
 }
 
 impl Default for TrayRuntimeStateInput {
@@ -52,6 +70,7 @@ impl Default for TrayRuntimeStateInput {
             active_subscription_name: None,
             locale: "en-US".to_string(),
             window_visible: true,
+            close_behavior: TrayCloseBehavior::Hide,
         }
     }
 }

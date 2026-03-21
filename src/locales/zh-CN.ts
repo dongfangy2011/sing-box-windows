@@ -436,6 +436,10 @@ export default {
     startup: {
       title: '启动设置',
       description: '配置应用启动和自动运行选项',
+      closeBehavior: '关闭窗口行为',
+      closeBehaviorDesc: '选择点击关闭按钮后是隐藏到托盘，还是销毁窗口以降低后台内存占用',
+      closeBehaviorHide: '隐藏到托盘',
+      closeBehaviorLightweight: '轻量模式（销毁窗口）',
       enabled: '开机自启动已启用',
       disabled: '开机自启动已禁用',
       enableSuccess: '开机自启动设置成功',

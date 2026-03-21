@@ -1,7 +1,7 @@
 use crate::utils::log_util;
 use app::storage::EnhancedStorageService;
 use std::sync::Arc;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
 use tauri_plugin_autostart::MacosLauncher;
 use tokio::sync::OnceCell;
 
@@ -17,6 +17,18 @@ pub fn run() {
     let log_dir = log_util::init_logging();
 
     tauri::Builder::default()
+        .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
+
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                if let Err(err) = crate::app::tray::close_main_window(window.app_handle()) {
+                    tracing::warn!("拦截主窗口关闭事件失败: {}", err);
+                }
+            }
+        })
         .plugin(tauri_plugin_websocket::init())
         .plugin(tauri_plugin_os::init()) // 添加 OS 信息插件
         .plugin(tauri_plugin_opener::init()) // 统一打开外部版本页面
@@ -42,7 +54,7 @@ pub fn run() {
             // 判断参数
             let args: Vec<String> = std::env::args().collect();
             if args.len() > 1 && args[1] == "--hide" {
-                if let Some(window) = app.get_window("main") {
+                if let Some(window) = app.get_webview_window("main") {
                     if let Err(err) = window.hide() {
                         tracing::warn!("启动参数 --hide 隐藏窗口失败: {}", err);
                     }
@@ -197,10 +209,20 @@ pub fn run() {
             crate::app::tray::commands::tray_set_last_visible_route,
             crate::app::tray::commands::tray_show_main_window,
             crate::app::tray::commands::tray_hide_main_window,
+            crate::app::tray::commands::tray_close_main_window,
+            crate::app::tray::commands::tray_consume_pending_restore_route,
             crate::app::tray::commands::tray_request_app_exit,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_, event| {
+            if let RunEvent::ExitRequested { api, .. } = event {
+                if crate::app::tray::should_prevent_exit() {
+                    tracing::info!("主窗口已销毁，保留托盘与后台任务，阻止应用退出");
+                    api.prevent_exit();
+                }
+            }
+        });
 }
 
 #[allow(dead_code)]

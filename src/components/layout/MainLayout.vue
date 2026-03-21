@@ -29,7 +29,7 @@
           <button class="control-btn maximize" @click="windowStore.toggleMaximize">
             <n-icon size="14"><SquareOutline /></n-icon>
           </button>
-          <button class="control-btn close" @click="() => windowStore.hideWindow(router)">
+          <button class="control-btn close" @click="() => windowStore.closeToTray(router)">
             <n-icon size="16"><CloseOutline /></n-icon>
           </button>
         </div>

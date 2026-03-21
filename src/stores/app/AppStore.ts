@@ -8,6 +8,7 @@ import { createAppPersistence } from './composables/persistence'
 
 // 代理模式类型
 export type ProxyMode = 'system' | 'tun' | 'manual'
+export type TrayCloseBehavior = 'hide' | 'lightweight'
 
 const DEFAULT_SYSTEM_PROXY_BYPASS =
   'localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*'
@@ -61,6 +62,7 @@ export const useAppStore = defineStore(
 
     // 系统开机自启动设置
     const autoStartApp = ref(false)
+    const trayCloseBehavior = ref<TrayCloseBehavior>('hide')
 
     // IP版本设置
     const preferIpv6 = ref(false)
@@ -114,6 +116,7 @@ export const useAppStore = defineStore(
       tunEnabled,
       autoStartKernel,
       autoStartApp,
+      trayCloseBehavior,
       preferIpv6,
       allowLanAccess,
       proxyPort,
@@ -190,6 +193,7 @@ export const useAppStore = defineStore(
           apiPort: apiPort.value,
           autoStartKernel: autoStartKernel.value,
           autoStartApp: autoStartApp.value,
+          trayCloseBehavior: trayCloseBehavior.value,
           allowLanAccess: allowLanAccess.value,
         })
 
@@ -281,6 +285,12 @@ export const useAppStore = defineStore(
         console.error('切换自动启动内核设置失败:', error)
         throw error
       }
+    }
+
+    const setTrayCloseBehavior = async (behavior: TrayCloseBehavior) => {
+      trayCloseBehavior.value = behavior
+      await waitForSaveCompletion()
+      console.log('关闭到托盘行为已切换为:', behavior)
     }
 
     // 切换系统代理
@@ -420,6 +430,7 @@ export const useAppStore = defineStore(
       proxyMode,
       autoStartKernel,
       autoStartApp,
+      trayCloseBehavior,
       preferIpv6,
       allowLanAccess,
       proxyPort,
@@ -453,6 +464,7 @@ export const useAppStore = defineStore(
       setConnectingState,
       toggleAutoStart,
       toggleAutoStartKernel,
+      setTrayCloseBehavior,
       toggleSystemProxy,
       toggleTun,
       switchProxyMode,

@@ -487,6 +487,11 @@ export default {
     startup: {
       title: '起動設定',
       description: 'アプリ起動と自動実行オプションを設定',
+      closeBehavior: '閉じるボタンの動作',
+      closeBehaviorDesc:
+        '閉じる時にトレイへ隠すか、ウィンドウを破棄してバックグラウンドのメモリ使用量を下げるかを選択します',
+      closeBehaviorHide: 'トレイに隠す',
+      closeBehaviorLightweight: '軽量モード（ウィンドウ破棄）',
       enabled: 'システム起動が有効',
       disabled: 'システム起動が無効',
       enableSuccess: 'システム起動設定が成功しました',

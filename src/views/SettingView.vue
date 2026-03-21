@@ -116,6 +116,19 @@
             </div>
             <n-switch v-model:value="autoStart" @update:value="onAutoStartChange" />
           </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">{{ t('setting.startup.closeBehavior') }}</div>
+              <div class="setting-desc">{{ t('setting.startup.closeBehaviorDesc') }}</div>
+            </div>
+            <n-select
+              v-model:value="trayCloseBehavior"
+              :options="trayCloseBehaviorOptions"
+              size="small"
+              class="setting-input setting-input-wide"
+              @update:value="onTrayCloseBehaviorChange"
+            />
+          </div>
         </div>
       </div>
 
@@ -808,6 +821,7 @@ import {
 import { useSubStore } from '@/stores/subscription/SubStore'
 import type { Locale } from '@/stores/app/LocaleStore'
 import type { ThemeMode } from '@/stores/app/ThemeStore'
+import type { TrayCloseBehavior } from '@/stores/app/AppStore'
 import type { UpdateChannel } from '@/stores/app/UpdateStore'
 import { systemService, type BackupImportResult } from '@/services/system-service'
 import { supportedLocales } from '@/locales'
@@ -832,6 +846,7 @@ const selectedKernelVersion = ref<string | undefined>(undefined)
 const platformInfo = ref<{ os: string; arch: string; display_name: string } | null>(null)
 
 const autoStart = ref(false)
+const trayCloseBehavior = ref<TrayCloseBehavior>('hide')
 const checkingUpdate = ref(false)
 const backupExporting = ref(false)
 const backupValidating = ref(false)
@@ -866,6 +881,10 @@ const updateChannelOptions = computed<{ label: string; value: UpdateChannel }[]>
   { label: t('setting.update.channelStable'), value: 'stable' },
   { label: t('setting.update.channelPrerelease'), value: 'prerelease' },
   { label: t('setting.update.channelAutobuild'), value: 'autobuild' },
+])
+const trayCloseBehaviorOptions = computed<{ label: string; value: TrayCloseBehavior }[]>(() => [
+  { label: t('setting.startup.closeBehaviorHide'), value: 'hide' },
+  { label: t('setting.startup.closeBehaviorLightweight'), value: 'lightweight' },
 ])
 
 const tunStackOptions = TUN_STACK_OPTIONS
@@ -960,6 +979,19 @@ const onAutoStartChange = async (value: boolean) => {
   } catch (error) {
     message.error(t('common.saveFailed'))
     autoStart.value = !value
+  }
+}
+
+const onTrayCloseBehaviorChange = async (value: TrayCloseBehavior) => {
+  const previous = appStore.trayCloseBehavior
+  try {
+    await appStore.setTrayCloseBehavior(value)
+    trayCloseBehavior.value = value
+    message.success(t('common.saveSuccess'))
+  } catch (error) {
+    console.error('保存关闭到托盘行为失败:', error)
+    trayCloseBehavior.value = previous
+    message.error(t('common.saveFailed'))
   }
 }
 const handleChangeLanguage = async (value: string) => {
@@ -1265,10 +1297,18 @@ onMounted(async () => {
   await appStore.waitForDataRestore()
   await appStore.syncAutoStartWithSystem()
   autoStart.value = appStore.autoStartApp
+  trayCloseBehavior.value = appStore.trayCloseBehavior
   watch(
     () => appStore.autoStartApp,
     (enabled) => {
       autoStart.value = enabled
+    },
+    { immediate: false },
+  )
+  watch(
+    () => appStore.trayCloseBehavior,
+    (behavior) => {
+      trayCloseBehavior.value = behavior
     },
     { immediate: false },
   )
@@ -1376,6 +1416,10 @@ onUnmounted(() => {
 
 .setting-input {
   width: 140px;
+}
+
+.setting-input-wide {
+  width: 220px;
 }
 
 .setting-row.align-start {
