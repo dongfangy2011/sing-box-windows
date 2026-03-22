@@ -487,6 +487,9 @@ export default {
     startup: {
       title: '起動設定',
       description: 'アプリ起動と自動実行オプションを設定',
+      autoHideToTrayOnAutostart: '自動起動時にトレイへ隠す',
+      autoHideToTrayOnAutostartDesc:
+        'システムの自動起動でアプリが起動した時だけ有効です。無効にするとログイン時にメインウィンドウを表示します。',
       closeBehavior: '閉じるボタンの動作',
       closeBehaviorDesc:
         '閉じる時にトレイへ隠すか、ウィンドウを破棄してバックグラウンドのメモリ使用量を下げるかを選択します',

@@ -62,6 +62,7 @@ export const useAppStore = defineStore(
 
     // 系统开机自启动设置
     const autoStartApp = ref(false)
+    const autoHideToTrayOnAutostart = ref(true)
     const trayCloseBehavior = ref<TrayCloseBehavior>('hide')
 
     // IP版本设置
@@ -116,6 +117,7 @@ export const useAppStore = defineStore(
       tunEnabled,
       autoStartKernel,
       autoStartApp,
+      autoHideToTrayOnAutostart,
       trayCloseBehavior,
       preferIpv6,
       allowLanAccess,
@@ -157,6 +159,7 @@ export const useAppStore = defineStore(
 
         console.log('🔍 系统自启状态检查:', {
           databaseSetting: autoStartApp.value,
+          autoHideToTrayOnAutostart: autoHideToTrayOnAutostart.value,
           systemActual: systemEnabled,
         })
 
@@ -193,6 +196,7 @@ export const useAppStore = defineStore(
           apiPort: apiPort.value,
           autoStartKernel: autoStartKernel.value,
           autoStartApp: autoStartApp.value,
+          autoHideToTrayOnAutostart: autoHideToTrayOnAutostart.value,
           trayCloseBehavior: trayCloseBehavior.value,
           allowLanAccess: allowLanAccess.value,
         })
@@ -291,6 +295,12 @@ export const useAppStore = defineStore(
       trayCloseBehavior.value = behavior
       await waitForSaveCompletion()
       console.log('关闭到托盘行为已切换为:', behavior)
+    }
+
+    const setAutoHideToTrayOnAutostart = async (enabled: boolean) => {
+      autoHideToTrayOnAutostart.value = enabled
+      await waitForSaveCompletion()
+      console.log('开机自启后自动隐藏到托盘已切换为:', enabled)
     }
 
     // 切换系统代理
@@ -430,6 +440,7 @@ export const useAppStore = defineStore(
       proxyMode,
       autoStartKernel,
       autoStartApp,
+      autoHideToTrayOnAutostart,
       trayCloseBehavior,
       preferIpv6,
       allowLanAccess,
@@ -464,6 +475,7 @@ export const useAppStore = defineStore(
       setConnectingState,
       toggleAutoStart,
       toggleAutoStartKernel,
+      setAutoHideToTrayOnAutostart,
       setTrayCloseBehavior,
       toggleSystemProxy,
       toggleTun,

@@ -11,6 +11,32 @@ pub mod platform;
 pub mod process;
 pub mod utils;
 
+#[derive(Debug, Clone, Copy)]
+struct StartupLaunchContext {
+    should_start_hidden: bool,
+    should_start_lightweight: bool,
+    close_behavior: crate::app::tray::TrayCloseBehavior,
+}
+
+fn resolve_startup_launch_context<R: tauri::Runtime>(app: &tauri::App<R>) -> StartupLaunchContext {
+    let args: Vec<String> = std::env::args().collect();
+    let launched_via_autostart = args
+        .iter()
+        .any(|arg| arg == "--autostart" || arg == "--hide");
+    let startup_preferences = crate::app::storage::read_startup_preferences_sync(app.handle());
+    let close_behavior =
+        crate::app::tray::TrayCloseBehavior::from_raw(&startup_preferences.tray_close_behavior);
+    let should_start_hidden =
+        launched_via_autostart && startup_preferences.auto_hide_to_tray_on_autostart;
+
+    StartupLaunchContext {
+        should_start_hidden,
+        should_start_lightweight: should_start_hidden
+            && close_behavior == crate::app::tray::TrayCloseBehavior::Lightweight,
+        close_behavior,
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // 初始化日志，支持文件输出 + 定期清理
@@ -34,7 +60,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init()) // 统一打开外部版本页面
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
-            Some(vec!["--hide"]),
+            Some(vec!["--autostart"]),
         ))
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             // 已有实例正在运行时的处理
@@ -51,20 +77,36 @@ pub fn run() {
             //             .build(),
             //     )?;
             // }
-            // 判断参数
-            let args: Vec<String> = std::env::args().collect();
-            if args.len() > 1 && args[1] == "--hide" {
+            let startup_context = resolve_startup_launch_context(app);
+            crate::app::tray::apply_startup_preferences(
+                startup_context.close_behavior,
+                !startup_context.should_start_hidden,
+            );
+
+            if startup_context.should_start_hidden {
                 if let Some(window) = app.get_webview_window("main") {
                     if let Err(err) = window.hide() {
-                        tracing::warn!("启动参数 --hide 隐藏窗口失败: {}", err);
+                        tracing::warn!("启动时隐藏主窗口失败: {}", err);
                     }
                 } else {
-                    tracing::warn!("启动参数 --hide 生效时未找到 main 窗口");
+                    tracing::warn!("启动时未找到 main 窗口");
                 }
             }
 
             if let Err(err) = crate::app::tray::init_tray(app.handle()) {
                 tracing::error!("初始化托盘失败: {}", err);
+            }
+
+            if startup_context.should_start_lightweight {
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                    if let Err(err) =
+                        crate::app::tray::enter_startup_background_mode(&app_handle, true)
+                    {
+                        tracing::warn!("开机自启轻量模式进入失败: {}", err);
+                    }
+                });
             }
 
             // 启动日志目录定时清理

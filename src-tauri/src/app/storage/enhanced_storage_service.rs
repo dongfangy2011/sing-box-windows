@@ -2,11 +2,14 @@ use super::DatabaseService;
 use crate::app::core::kernel_auto_manage::auto_manage_with_saved_config;
 use crate::app::storage::error::StorageResult;
 use crate::app::storage::state_model::{
-    AppConfig, LocaleConfig, Subscription, ThemeConfig, UpdateConfig, WindowConfig,
+    AppConfig, LocaleConfig, StartupPreferences, Subscription, ThemeConfig, UpdateConfig,
+    WindowConfig,
 };
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 use tokio::sync::OnceCell;
+
+const STARTUP_PREFERENCES_FILE: &str = "startup_preferences.json";
 
 /// 将全局设置同步到指定的配置文件
 enum ConfigPatchMode {
@@ -80,10 +83,7 @@ pub struct EnhancedStorageService {
 
 impl EnhancedStorageService {
     pub async fn new(app_handle: &AppHandle) -> StorageResult<Self> {
-        let app_data_dir = app_handle
-            .path()
-            .app_data_dir()
-            .unwrap_or_else(|_| std::env::current_dir().unwrap());
+        let app_data_dir = resolve_app_data_dir(app_handle);
 
         // 确保目录存在
         std::fs::create_dir_all(&app_data_dir)?;
@@ -216,6 +216,59 @@ impl EnhancedStorageService {
     }
 }
 
+fn resolve_app_data_dir<R: tauri::Runtime>(app_handle: &AppHandle<R>) -> std::path::PathBuf {
+    app_handle
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| std::env::current_dir().unwrap())
+}
+
+fn resolve_startup_preferences_path<R: tauri::Runtime>(
+    app_handle: &AppHandle<R>,
+) -> std::path::PathBuf {
+    resolve_app_data_dir(app_handle).join(STARTUP_PREFERENCES_FILE)
+}
+
+fn build_startup_preferences(config: &AppConfig) -> StartupPreferences {
+    StartupPreferences {
+        auto_start_app: config.auto_start_app,
+        auto_hide_to_tray_on_autostart: config.auto_hide_to_tray_on_autostart,
+        tray_close_behavior: config.tray_close_behavior.clone(),
+    }
+}
+
+pub fn read_startup_preferences_sync<R: tauri::Runtime>(
+    app_handle: &AppHandle<R>,
+) -> StartupPreferences {
+    let path = resolve_startup_preferences_path(app_handle);
+    let content = match std::fs::read_to_string(&path) {
+        Ok(content) => content,
+        Err(error) => {
+            tracing::debug!("读取启动偏好失败，使用默认值: {}", error);
+            return StartupPreferences::default();
+        }
+    };
+
+    serde_json::from_str(&content).unwrap_or_else(|error| {
+        tracing::warn!("解析启动偏好失败，使用默认值: {}", error);
+        StartupPreferences::default()
+    })
+}
+
+pub fn save_startup_preferences_sync<R: tauri::Runtime>(
+    app_handle: &AppHandle<R>,
+    config: &AppConfig,
+) -> Result<(), String> {
+    let app_data_dir = resolve_app_data_dir(app_handle);
+    std::fs::create_dir_all(&app_data_dir).map_err(|e| format!("创建应用数据目录失败: {}", e))?;
+
+    let path = resolve_startup_preferences_path(app_handle);
+    let payload = build_startup_preferences(config);
+    let content =
+        serde_json::to_string_pretty(&payload).map_err(|e| format!("序列化启动偏好失败: {}", e))?;
+    std::fs::write(&path, content).map_err(|e| format!("写入启动偏好失败: {}", e))
+}
+
 // Tauri 命令实现
 #[tauri::command]
 pub async fn db_get_app_config(app: AppHandle) -> Result<AppConfig, String> {
@@ -253,7 +306,9 @@ pub async fn db_save_app_config_internal(config: AppConfig, app: AppHandle) -> R
     storage
         .save_app_config(&config)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string())?;
+    save_startup_preferences_sync(&app, &config)?;
+    Ok(())
 }
 
 #[tauri::command]

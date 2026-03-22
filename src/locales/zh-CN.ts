@@ -436,6 +436,9 @@ export default {
     startup: {
       title: '启动设置',
       description: '配置应用启动和自动运行选项',
+      autoHideToTrayOnAutostart: '开机后自动隐藏到托盘',
+      autoHideToTrayOnAutostartDesc:
+        '仅在系统开机自启拉起应用时生效。关闭后，应用会在开机自启时直接显示主窗口。',
       closeBehavior: '关闭窗口行为',
       closeBehaviorDesc: '选择点击关闭按钮后是隐藏到托盘，还是销毁窗口以降低后台内存占用',
       closeBehaviorHide: '隐藏到托盘',

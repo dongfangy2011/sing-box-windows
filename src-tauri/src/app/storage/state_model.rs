@@ -7,6 +7,7 @@ use ts_rs::TS;
 pub struct AppConfig {
     pub auto_start_kernel: bool,
     pub auto_start_app: bool,
+    pub auto_hide_to_tray_on_autostart: bool,
     pub tray_close_behavior: String,
     pub prefer_ipv6: bool,
     pub allow_lan_access: bool,
@@ -62,6 +63,7 @@ impl Default for AppConfig {
         Self {
             auto_start_kernel: true,
             auto_start_app: false,
+            auto_hide_to_tray_on_autostart: true,
             tray_close_behavior: "hide".to_string(),
             prefer_ipv6: false,
             allow_lan_access: false,
@@ -101,6 +103,24 @@ impl Default for AppConfig {
             singbox_enable_app_groups: true,
             tun_self_heal_enabled: true,
             tun_self_heal_cooldown_secs: 90,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct StartupPreferences {
+    pub auto_start_app: bool,
+    pub auto_hide_to_tray_on_autostart: bool,
+    pub tray_close_behavior: String,
+}
+
+impl Default for StartupPreferences {
+    fn default() -> Self {
+        Self {
+            auto_start_app: false,
+            auto_hide_to_tray_on_autostart: true,
+            tray_close_behavior: "hide".to_string(),
         }
     }
 }

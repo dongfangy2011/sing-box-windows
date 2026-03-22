@@ -52,6 +52,7 @@ impl DatabaseService {
                 id INTEGER PRIMARY KEY,
                 auto_start_kernel BOOLEAN DEFAULT FALSE,
                 auto_start_app BOOLEAN DEFAULT FALSE,
+                auto_hide_to_tray_on_autostart BOOLEAN DEFAULT TRUE,
                 tray_close_behavior TEXT DEFAULT 'hide',
                 prefer_ipv6 BOOLEAN DEFAULT FALSE,
                 allow_lan_access BOOLEAN DEFAULT FALSE,
@@ -97,6 +98,7 @@ impl DatabaseService {
         // 检查并添加 legacy 缺失字段（升级兼容）
         let alter_statements = [
             "ALTER TABLE app_config ADD COLUMN auto_start_app BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE app_config ADD COLUMN auto_hide_to_tray_on_autostart BOOLEAN DEFAULT TRUE",
             "ALTER TABLE app_config ADD COLUMN tray_close_behavior TEXT DEFAULT 'hide'",
             "ALTER TABLE app_config ADD COLUMN allow_lan_access BOOLEAN DEFAULT FALSE",
             "ALTER TABLE app_config ADD COLUMN system_proxy_bypass TEXT DEFAULT 'localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*'",
@@ -246,6 +248,9 @@ impl DatabaseService {
             Ok(Some(AppConfig {
                 auto_start_kernel: row.get("auto_start_kernel"),
                 auto_start_app: row.get("auto_start_app"),
+                auto_hide_to_tray_on_autostart: row
+                    .try_get("auto_hide_to_tray_on_autostart")
+                    .unwrap_or(default_config.auto_hide_to_tray_on_autostart),
                 tray_close_behavior: row
                     .try_get("tray_close_behavior")
                     .unwrap_or_else(|_| default_config.tray_close_behavior.clone()),
@@ -342,12 +347,13 @@ impl DatabaseService {
         sqlx::query(
             r#"
             INSERT OR REPLACE INTO app_config
-            (id, auto_start_kernel, auto_start_app, tray_close_behavior, prefer_ipv6, allow_lan_access, proxy_port, api_port, proxy_mode, system_proxy_enabled, tun_enabled, tray_instance_id, system_proxy_bypass, tun_auto_route, tun_strict_route, tun_mtu, tun_ipv4, tun_ipv6, tun_stack, tun_enable_ipv6, active_config_path, installed_kernel_version, singbox_dns_proxy, singbox_dns_cn, singbox_dns_resolver, singbox_urltest_url, singbox_default_proxy_outbound, singbox_block_ads, singbox_download_detour, singbox_dns_hijack, singbox_fake_dns_enabled, singbox_fake_dns_ipv4_range, singbox_fake_dns_ipv6_range, singbox_fake_dns_filter_mode, singbox_enable_app_groups, tun_self_heal_enabled, tun_self_heal_cooldown_secs, updated_at)
-            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, auto_start_kernel, auto_start_app, auto_hide_to_tray_on_autostart, tray_close_behavior, prefer_ipv6, allow_lan_access, proxy_port, api_port, proxy_mode, system_proxy_enabled, tun_enabled, tray_instance_id, system_proxy_bypass, tun_auto_route, tun_strict_route, tun_mtu, tun_ipv4, tun_ipv6, tun_stack, tun_enable_ipv6, active_config_path, installed_kernel_version, singbox_dns_proxy, singbox_dns_cn, singbox_dns_resolver, singbox_urltest_url, singbox_default_proxy_outbound, singbox_block_ads, singbox_download_detour, singbox_dns_hijack, singbox_fake_dns_enabled, singbox_fake_dns_ipv4_range, singbox_fake_dns_ipv6_range, singbox_fake_dns_filter_mode, singbox_enable_app_groups, tun_self_heal_enabled, tun_self_heal_cooldown_secs, updated_at)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             "#,
         )
         .bind(config.auto_start_kernel)
         .bind(config.auto_start_app)
+        .bind(config.auto_hide_to_tray_on_autostart)
         .bind(&config.tray_close_behavior)
         .bind(config.prefer_ipv6)
         .bind(config.allow_lan_access)

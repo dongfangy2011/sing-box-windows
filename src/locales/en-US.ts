@@ -441,6 +441,9 @@ export default {
     startup: {
       title: 'Startup Settings',
       description: 'Configure application startup and auto-run options',
+      autoHideToTrayOnAutostart: 'Hide to Tray on Autostart',
+      autoHideToTrayOnAutostartDesc:
+        'Only applies when the app is launched by system autostart. Disable it to show the main window on login.',
       closeBehavior: 'Close Button Behavior',
       closeBehaviorDesc:
         'Choose whether closing the window hides it to tray or destroys it for lower background memory usage',

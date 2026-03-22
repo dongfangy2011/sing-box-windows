@@ -390,6 +390,15 @@ pub fn set_last_visible_route(path: &str) {
     });
 }
 
+pub fn apply_startup_preferences(close_behavior: TrayCloseBehavior, window_visible: bool) {
+    with_state_write(|state| {
+        state.close_behavior = close_behavior;
+        state.window_visible = window_visible;
+        state.keep_alive_without_windows = false;
+        state.allow_app_exit = false;
+    });
+}
+
 fn create_main_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     let window_config = app
         .config()
@@ -492,29 +501,19 @@ pub fn hide_main_window<R: Runtime>(app: &AppHandle<R>, emit_events: bool) -> Re
 pub fn close_main_window<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     match with_state_read(|state| state.close_behavior) {
         TrayCloseBehavior::Hide => hide_main_window(app, true),
-        TrayCloseBehavior::Lightweight => {
-            let main_window = app
-                .get_webview_window("main")
-                .ok_or_else(|| "未找到主窗口".to_string())?;
-            let route = with_state_read(|state| state.last_visible_route.clone());
-
-            with_state_write(|state| {
-                state.set_window_visible(false);
-                state.keep_alive_without_windows = true;
-                state.allow_app_exit = false;
-                state.set_pending_restore_route(&route);
-            });
-
-            if let Err(err) = main_window.destroy() {
-                with_state_write(|state| {
-                    state.keep_alive_without_windows = false;
-                });
-                return Err(format!("销毁主窗口失败: {}", err));
-            }
-
-            Ok(())
-        }
+        TrayCloseBehavior::Lightweight => destroy_main_window_for_tray(app),
     }
+}
+
+pub fn enter_startup_background_mode<R: Runtime>(
+    app: &AppHandle<R>,
+    lightweight: bool,
+) -> Result<(), String> {
+    if !lightweight {
+        return hide_main_window(app, false);
+    }
+
+    destroy_main_window_for_tray(app)
 }
 
 pub fn consume_pending_restore_route() -> Option<TrayNavigatePayload> {
@@ -527,6 +526,29 @@ pub fn consume_pending_restore_route() -> Option<TrayNavigatePayload> {
 
 pub fn should_prevent_exit() -> bool {
     with_state_read(|state| state.keep_alive_without_windows && !state.allow_app_exit)
+}
+
+fn destroy_main_window_for_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+    let main_window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "未找到主窗口".to_string())?;
+    let route = with_state_read(|state| state.last_visible_route.clone());
+
+    with_state_write(|state| {
+        state.set_window_visible(false);
+        state.keep_alive_without_windows = true;
+        state.allow_app_exit = false;
+        state.set_pending_restore_route(&route);
+    });
+
+    if let Err(err) = main_window.destroy() {
+        with_state_write(|state| {
+            state.keep_alive_without_windows = false;
+        });
+        return Err(format!("销毁主窗口失败: {}", err));
+    }
+
+    Ok(())
 }
 
 pub fn request_app_exit<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {

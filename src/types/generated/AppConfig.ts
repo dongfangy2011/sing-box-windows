@@ -1,6 +1,7 @@
 export interface AppConfig {
   auto_start_kernel: boolean
   auto_start_app: boolean
+  auto_hide_to_tray_on_autostart: boolean
   tray_close_behavior: string
   prefer_ipv6: boolean
   allow_lan_access: boolean

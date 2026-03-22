@@ -118,6 +118,18 @@
           </div>
           <div class="setting-row">
             <div class="setting-info">
+              <div class="setting-label">{{ t('setting.startup.autoHideToTrayOnAutostart') }}</div>
+              <div class="setting-desc">
+                {{ t('setting.startup.autoHideToTrayOnAutostartDesc') }}
+              </div>
+            </div>
+            <n-switch
+              v-model:value="autoHideToTrayOnAutostart"
+              @update:value="onAutoHideToTrayOnAutostartChange"
+            />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
               <div class="setting-label">{{ t('setting.startup.closeBehavior') }}</div>
               <div class="setting-desc">{{ t('setting.startup.closeBehaviorDesc') }}</div>
             </div>
@@ -846,6 +858,7 @@ const selectedKernelVersion = ref<string | undefined>(undefined)
 const platformInfo = ref<{ os: string; arch: string; display_name: string } | null>(null)
 
 const autoStart = ref(false)
+const autoHideToTrayOnAutostart = ref(true)
 const trayCloseBehavior = ref<TrayCloseBehavior>('hide')
 const checkingUpdate = ref(false)
 const backupExporting = ref(false)
@@ -991,6 +1004,19 @@ const onTrayCloseBehaviorChange = async (value: TrayCloseBehavior) => {
   } catch (error) {
     console.error('保存关闭到托盘行为失败:', error)
     trayCloseBehavior.value = previous
+    message.error(t('common.saveFailed'))
+  }
+}
+
+const onAutoHideToTrayOnAutostartChange = async (value: boolean) => {
+  const previous = appStore.autoHideToTrayOnAutostart
+  try {
+    await appStore.setAutoHideToTrayOnAutostart(value)
+    autoHideToTrayOnAutostart.value = value
+    message.success(t('common.saveSuccess'))
+  } catch (error) {
+    console.error('保存开机后自动隐藏窗口到托盘设置失败:', error)
+    autoHideToTrayOnAutostart.value = previous
     message.error(t('common.saveFailed'))
   }
 }
@@ -1297,11 +1323,19 @@ onMounted(async () => {
   await appStore.waitForDataRestore()
   await appStore.syncAutoStartWithSystem()
   autoStart.value = appStore.autoStartApp
+  autoHideToTrayOnAutostart.value = appStore.autoHideToTrayOnAutostart
   trayCloseBehavior.value = appStore.trayCloseBehavior
   watch(
     () => appStore.autoStartApp,
     (enabled) => {
       autoStart.value = enabled
+    },
+    { immediate: false },
+  )
+  watch(
+    () => appStore.autoHideToTrayOnAutostart,
+    (enabled) => {
+      autoHideToTrayOnAutostart.value = enabled
     },
     { immediate: false },
   )
